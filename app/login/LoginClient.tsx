@@ -391,11 +391,11 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "").trim();
+    const usn = String(formData.get("usn") ?? "").trim();
     const password = String(formData.get("password") ?? "");
 
-    if (!email || !password) {
-      toast.error("Please enter both email and password.", {
+    if (!usn || !password) {
+      toast.error("Please enter both USN and password.", {
         icon: <AlertCircle className="h-5 w-5 text-rose-500" />
       });
       return;
@@ -407,7 +407,7 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ usn, password }),
       });
 
       const data = await response.json();
@@ -437,7 +437,7 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form className="flex flex-col gap-3" onSubmit={onSubmit} noValidate>
       <InputField
-        id="email"
+        id="usn"
         label="USN"
         type="text"
         placeholder="Enter your USN"

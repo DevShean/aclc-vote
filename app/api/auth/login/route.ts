@@ -3,7 +3,7 @@ import { query, type Student } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
-    const { email: usn, password } = await request.json();
+    const { usn, password } = await request.json();
 
     if (!usn || !password) {
       return NextResponse.json(
