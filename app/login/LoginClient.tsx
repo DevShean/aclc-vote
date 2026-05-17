@@ -2,32 +2,35 @@
 
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion, type Transition } from "motion/react";
 import {
-  Construction,
   Eye,
   EyeOff,
   LockKeyhole,
   LogIn,
-  Mail,
   UserPlus,
   UserRound,
-  ShieldCheck
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  Vote,
+  Activity
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, type ReactNode, useState, useEffect } from "react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 // ─── Static copy ─────────────────────────────────────────────────────────────
+
+interface SearchedStudent {
+  usn: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  course: string;
+  section: string;
+}
 
 const authCopy = {
   login: {
@@ -40,31 +43,39 @@ const authCopy = {
   },
 } as const;
 
-// ─── Constants ─────────────────────────────────────────────────────────────
-
-const BACKGROUND_IMAGES = [
-  "/img/bg/487504859_1103237165156296_9068684090957355681_n.jpg",
-  "/img/bg/487792077_1103724245107588_6946238724504402471_n.jpg",
-  "/img/bg/487818438_1103724265107586_1566616198544260297_n.jpg",
-  "/img/bg/487997325_1103738515106161_1743352002758202848_n.jpg",
-  "/img/bg/488502142_1105161598297186_1204773431847924387_n.jpg",
-  "/img/bg/667585274_1422103136603029_7793980385051577507_n.jpg",
-  "/img/bg/668412337_1422103049936371_6881423643504357290_n.jpg",
-  "/img/bg/668434195_1422103079936368_4368765746477651947_n.jpg",
-];
-
-// ─── Root component ───────────────────────────────────────────────────────────
-
 export default function LoginClient() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
-  const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  const [searchedStudent, setSearchedStudent] = useState<SearchedStudent | null>(null);
+  const [timeLeft, setTimeLeft] = useState("08:00:00");
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
 
+  const handleTabChange = (tab: "login" | "register") => {
+    setActiveTab(tab);
+    setSearchedStudent(null);
+  };
+
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, 5000); // Change image every 5 seconds
+    const target = new Date();
+    target.setHours(17, 0, 0, 0); // 5:00 PM today
+    if (target.getTime() < Date.now()) {
+      target.setDate(target.getDate() + 1); // 5 PM tomorrow if it passed
+    }
+    const update = () => {
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft("00:00:00");
+        return;
+      }
+      const h = Math.floor(diff / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeft(
+        `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+      );
+    };
+    update();
+    const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -76,7 +87,7 @@ export default function LoginClient() {
     <div className="h-screen overflow-hidden bg-background">
       <main className="animate-rise-in grid h-screen lg:grid-cols-[0.7fr_1.3fr]">
         {/* ── Left panel — Form ── */}
-        <section className="relative flex items-center justify-center overflow-y-auto bg-linear-to-b from-blue-50 to-white p-8 sm:p-10 lg:p-12 z-10">
+        <section className="relative flex items-center justify-center overflow-y-auto bg-linear-to-b from-blue-50 to-white p-6 sm:p-8 lg:p-10 z-10">
           {/* Subtle Security Pattern Background */}
           <div 
             className="absolute inset-0 opacity-[0.03] pointer-events-none" 
@@ -85,15 +96,20 @@ export default function LoginClient() {
           
           <div className="mx-auto flex h-full w-full max-w-md flex-col relative z-10">
             {/* Live Status Indicator */}
-            <div className="flex justify-center mb-6">
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-emerald-600 ring-1 ring-emerald-100 shadow-sm">
+            <div className="flex justify-between items-center bg-emerald-50/70 border border-emerald-100/80 rounded-2xl p-2 mb-4 shadow-xs">
+              <div className="flex items-center gap-2 pl-1">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
-                Election Period Live
+                <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-700">Election Live</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-800 bg-emerald-100/50 px-2.5 py-1 rounded-lg border border-emerald-200/40">
+                <span className="text-[9px] uppercase font-sans tracking-wider text-emerald-600 font-semibold">Ends In:</span>
+                <span>{timeLeft}</span>
               </div>
             </div>
+
             {/* Logo + heading */}
             <div className="space-y-1 text-center">
               <motion.div
@@ -102,7 +118,7 @@ export default function LoginClient() {
                 transition={contentTransition}
                 className="flex flex-col items-center"
               >
-                <div className="flex items-center justify-center gap-4 mb-3">
+                <div className="flex items-center justify-center gap-4 mb-2">
                   <div className="relative">
                     <Image
                       src="/img/logo/SSC LOGO.png"
@@ -146,12 +162,12 @@ export default function LoginClient() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -10 }}
                   transition={contentTransition}
-                  className="mt-6"
+                  className="mt-4"
                 >
-                  <h2 className="font-lexend text-3xl font-bold tracking-tight text-primary">
+                  <h2 className="font-lexend text-2xl font-bold tracking-tight text-primary">
                     {authCopy[activeTab].heading}
                   </h2>
-                  <p className="mt-1.5 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-500">
                     {authCopy[activeTab].description}
                   </p>
                 </motion.div>
@@ -160,10 +176,10 @@ export default function LoginClient() {
 
             {/* Tab switcher */}
             <LayoutGroup id="auth-tabs">
-              <div className="relative mt-8 grid grid-cols-2 gap-2 rounded-2xl bg-primary-soft p-1.5 shadow-inner">
+              <div className="relative mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-primary-soft p-1.5 shadow-inner">
                 <AuthTabButton
                   active={activeTab === "login"}
-                  onClick={() => setActiveTab("login")}
+                  onClick={() => handleTabChange("login")}
                   transition={contentTransition}
                   icon={<LogIn size={16} aria-hidden="true" />}
                 >
@@ -171,7 +187,7 @@ export default function LoginClient() {
                 </AuthTabButton>
                 <AuthTabButton
                   active={activeTab === "register"}
-                  onClick={() => setActiveTab("register")}
+                  onClick={() => handleTabChange("register")}
                   transition={contentTransition}
                   icon={<UserPlus size={16} aria-hidden="true" />}
                 >
@@ -181,7 +197,7 @@ export default function LoginClient() {
             </LayoutGroup>
 
             {/* Forms */}
-            <div className="relative mt-8 flex-1">
+            <div className="relative mt-5 flex-1">
               <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "login" ? (
                   <motion.div
@@ -201,31 +217,131 @@ export default function LoginClient() {
                     exit={{ opacity: 0, x: shouldReduceMotion ? 0 : -18, filter: "blur(6px)" }}
                     transition={contentTransition}
                   >
-                    <RegisterForm onSuccess={() => setActiveTab("login")} />
+                    <RegisterForm 
+                      onSuccess={() => handleTabChange("login")} 
+                      searchedStudent={searchedStudent}
+                      setSearchedStudent={setSearchedStudent}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Voting Stepper / Guide */}
+            {!searchedStudent && (
+              <>
+                <div className="mt-6 pt-4 border-t border-slate-100/80 space-y-3">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
+                    Secure Ballot Steps
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col items-center p-2 rounded-xl bg-blue-50/40 border border-blue-100/50 shadow-xs">
+                      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary-accent text-white font-lexend font-bold text-xs mb-1 shadow-sm shadow-blue-500/20">
+                        1
+                      </div>
+                      <span className="text-[10px] font-bold text-primary text-center leading-tight">Verify USN</span>
+                      <span className="text-[8px] font-bold text-primary-accent mt-0.5 uppercase tracking-wider animate-pulse">Active</span>
+                    </div>
+                    <div className="flex flex-col items-center p-2 rounded-xl bg-slate-50/60 border border-slate-100 opacity-60">
+                      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-200 text-slate-500 font-lexend font-bold text-xs mb-1">
+                        2
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-600 text-center leading-tight">Cast Ballot</span>
+                      <span className="text-[8px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider">Pending</span>
+                    </div>
+                    <div className="flex flex-col items-center p-2 rounded-xl bg-slate-50/60 border border-slate-100 opacity-60">
+                      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-200 text-slate-500 font-lexend font-bold text-xs mb-1">
+                        3
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-600 text-center leading-tight">Confirmation</span>
+                      <span className="text-[8px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider">Pending</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Turnout Progress */}
+                <div className="mt-4 p-3 rounded-2xl bg-white/60 border border-blue-100/30 shadow-xs space-y-2">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                    <span className="uppercase tracking-wider">Voter Turnout Rate</span>
+                    <span className="text-primary-accent">78.4% Participated</span>
+                  </div>
+                  <div className="relative h-1.5 w-full bg-slate-200/60 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: "78.4%" }}
+                      transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
+                      className="h-full bg-linear-to-r from-blue-500 to-primary-accent rounded-full" 
+                    />
+                  </div>
+                  <p className="text-[9px] font-medium text-slate-400 text-center leading-none">
+                    1,568 out of 2,000 registered students have cast their votes.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
-        {/* ── Right panel — Slideshow ── */}
-        <section className="relative hidden overflow-hidden lg:block bg-slate-900">
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div
-              key={currentBgIndex}
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url('${BACKGROUND_IMAGES[currentBgIndex]}')` }}
-            />
-          </AnimatePresence>
-          <div className="absolute inset-0 bg-linear-to-br from-blue-900/40 via-transparent to-black/40" />
+        {/* ── Right panel — Single Static Background Image ── */}
+        <section 
+          className="relative hidden overflow-hidden lg:flex flex-col justify-between p-12 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('/img/bg/437193639_294729263681669_8443938025331276693_n.jpg')` }}
+        >
+          <div className="absolute inset-0 bg-linear-to-br from-blue-950/85 via-blue-950/60 to-slate-950/95" />
+          
+          {/* Top Header Block - Placed at the top and bigger on a different container */}
+          {/* Top Header Block - Placed at the top and bigger with NO container */}
+          <div className="relative z-10 animate-fade-in self-start">
+            <div className="flex items-center gap-5">
+              <Image 
+                src="/img/logo/aclclogo.png" 
+                alt="ACLC Logo" 
+                width={56} 
+                height={56} 
+                className="object-contain drop-shadow-lg" 
+              />
+              <div className="flex flex-col" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
+                <span className="text-3xl font-black uppercase tracking-widest text-white leading-none">
+                  ACLC Student Council
+                </span>
+                <span className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-blue-300 mt-2 leading-none">
+                  <Vote size={16} />
+                  Official Voting Portal
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Description Block */}
+          <div className="relative z-10 max-w-xl text-white space-y-4 animate-fade-in-up" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.6)' }}>
+            <div className="space-y-2">
+              <h3 className="font-lexend text-3xl font-extrabold tracking-tight leading-tight text-white">
+                Empower Your Voice, Shape Our Future
+              </h3>
+              <p className="text-sm text-slate-100 leading-relaxed font-normal">
+                Welcome to the ACLC Official Student Voting Portal. Your vote is your power to choose leaders who will advocate for your academic journey and lead our student community towards excellence.
+              </p>
+            </div>
+            <div className="pt-5 flex items-center gap-8 text-sm text-white border-t border-white/20">
+              <div className="flex items-center gap-2.5 font-bold">
+                <LockKeyhole size={18} className="text-blue-400 drop-shadow-md" />
+                <span>Encrypted Ballot</span>
+              </div>
+              <div className="flex items-center gap-2.5 font-bold">
+                <Activity size={18} className="text-blue-400 drop-shadow-md" />
+                <span>Real-time Tallying</span>
+              </div>
+              <div className="flex items-center gap-2.5 font-bold">
+                <UserRound size={18} className="text-blue-400 drop-shadow-md" />
+                <span>One Student, One Vote</span>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
     </div>
+
+
   );
 }
 
@@ -279,32 +395,52 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
     const password = String(formData.get("password") ?? "");
 
     if (!email || !password) {
-      toast.error("Please enter both email and password.");
+      toast.error("Please enter both email and password.", {
+        icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+      });
       return;
     }
 
     try {
       setIsSubmitting(true);
-      // Simulated delay
-      await new Promise(r => setTimeout(r, 1500));
       
-      toast.success("Welcome back! Accessing voting dashboard...");
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Authentication failed.", {
+          icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+        });
+        return;
+      }
+      
+      toast.success(`Welcome back, ${data.student.fullName}! Accessing voting dashboard...`, {
+        icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+      });
       onSuccess();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error("Authentication failed. Please check your credentials.");
+      const errorMessage = err instanceof Error ? err.message : "Authentication failed. Please check your credentials.";
+      toast.error(errorMessage, {
+        icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form className="flex flex-col gap-5" onSubmit={onSubmit} noValidate>
+    <form className="flex flex-col gap-3" onSubmit={onSubmit} noValidate>
       <InputField
         id="email"
-        label="USN or Student ID"
+        label="USN"
         type="text"
-        placeholder="Enter your student ID or email"
+        placeholder="Enter your USN"
         icon={<UserRound size={18} />}
         disabled={isSubmitting}
       />
@@ -316,65 +452,16 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         icon={<LockKeyhole size={18} />}
         disabled={isSubmitting}
       />
-
-      <div className="flex items-center justify-between text-sm">
-        <label className="inline-flex cursor-pointer items-center gap-2 text-slate-500 group">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-line accent-primary-accent cursor-pointer"
-          />
-          <span className="group-hover:text-slate-700 transition-colors">Remember me</span>
-        </label>
-        
-        <Dialog>
-          <DialogTrigger className="cursor-pointer font-semibold text-primary-accent hover:underline decoration-2 underline-offset-4">
-            Forgot password?
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md gap-4 overflow-hidden border-none shadow-2xl" showCloseButton={false}>
-            <div className="absolute inset-x-0 top-0 h-1.5 bg-linear-to-r from-blue-400 via-indigo-500 to-blue-600" />
-            <div className="flex flex-col items-center text-center px-2 pt-4">
-              <div className="relative mb-6">
-                <span className="absolute inset-0 h-20 w-20 animate-ping rounded-full bg-blue-100 opacity-40" />
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-blue-50 to-indigo-50 shadow-inner ring-4 ring-white">
-                  <Construction size={36} className="text-blue-500" />
-                </div>
-              </div>
-
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold tracking-widest uppercase text-blue-700 ring-1 ring-blue-100">
-                <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                In Development
-              </div>
-
-              <DialogHeader className="items-center gap-2">
-                <DialogTitle className="font-lexend text-2xl font-bold text-primary">
-                  Password Recovery
-                </DialogTitle>
-                <DialogDescription className="max-w-xs text-slate-500 leading-relaxed">
-                  We are currently upgrading our security systems. Password recovery will be available shortly.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="mt-6 w-full rounded-2xl bg-slate-50 p-4 text-left border border-slate-100">
-                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Quick Solution</p>
-                <p className="text-sm text-slate-500">
-                  Please visit the MIS Department or contact your local student council representative for a manual password reset.
-                </p>
-              </div>
-            </div>
-            <DialogFooter className="mt-4" showCloseButton />
-          </DialogContent>
-        </Dialog>
-      </div>
-
+      
       <button
         type="submit"
         disabled={isSubmitting}
-        className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary-accent px-4 py-3 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-blue-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 mt-2"
+        className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary-accent px-4 py-2.5 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-blue-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 mt-1"
       >
         {isSubmitting ? (
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
         ) : (
-          <ShieldCheck size={20} />
+          <ShieldCheck size={18} />
         )}
         {isSubmitting ? "Authenticating..." : "Verify & Sign In"}
       </button>
@@ -384,68 +471,198 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
 // ─── Register form ────────────────────────────────────────────────────────────
 
-function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
+function RegisterForm({
+  onSuccess,
+  searchedStudent,
+  setSearchedStudent,
+}: {
+  onSuccess: () => void;
+  searchedStudent: SearchedStudent | null;
+  setSearchedStudent: (s: SearchedStudent | null) => void;
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [usnInput, setUsnInput] = useState("");
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // If we haven't searched the student yet, this is the SEARCH step!
+    if (!searchedStudent) {
+      if (!usnInput.trim()) {
+        toast.error("Please enter your USN.", {
+          icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+        });
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: usnInput.trim() }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          toast.error(data.error || "Search failed.", {
+            icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+          });
+          return;
+        }
+
+        toast.success(data.message || "Student search complete! Record found.", {
+          icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+        });
+        setSearchedStudent(data.student);
+      } catch (err: unknown) {
+        console.error(err);
+        const errorMessage = err instanceof Error ? err.message : "USN search failed. Student record not found.";
+        toast.error(errorMessage, {
+          icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Otherwise, this is the final PASSWORD REGISTER step!
     const formData = new FormData(event.currentTarget);
-    const studentId = String(formData.get("studentId") ?? "").trim();
-    const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
 
-    if (!studentId || !email || !password) {
-      toast.error("Please fill in all registration fields.");
+    if (!password) {
+      toast.error("Please set a password for your account.", {
+        icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+      });
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await new Promise(r => setTimeout(r, 2000));
-      toast.success("Registration successful! You can now sign in.");
+
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: searchedStudent.usn, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Registration failed.", {
+          icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+        });
+        return;
+      }
+
+      toast.success(data.message || "Registration successful! You can now sign in.", {
+        icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+      });
       onSuccess();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error("Registration failed. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Registration failed. Please try again.";
+      toast.error(errorMessage, {
+        icon: <AlertCircle className="h-5 w-5 text-rose-500" />
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
+    <form className="flex flex-col gap-3.5" onSubmit={onSubmit} noValidate>
       <InputField
         id="studentId"
-        label="Student ID"
+        label="USN"
         type="text"
-        placeholder="e.g. 2023-00001"
+        placeholder="Enter your USN"
         icon={<UserRound size={18} />}
-        disabled={isSubmitting}
+        disabled={isSubmitting || searchedStudent !== null}
+        value={searchedStudent ? searchedStudent.usn : usnInput}
+        onChange={(e) => setUsnInput(e.target.value)}
       />
-      <InputField
-        id="email"
-        label="Email Address"
-        type="email"
-        placeholder="student@aclc.edu.ph"
-        icon={<Mail size={18} />}
-        disabled={isSubmitting}
-      />
-      <InputField
-        id="password"
-        label="Password"
-        type="password"
-        placeholder="Create a secure password"
-        icon={<LockKeyhole size={18} />}
-        disabled={isSubmitting}
-      />
+
+      {searchedStudent && (
+        <>
+          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200/50 text-amber-800 text-[11px] font-semibold mt-1">
+            <HelpCircle className="h-4.5 w-4.5 text-amber-600 shrink-0" />
+            <span>Are you sure this is you? Please check your details before continuing.</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mt-1">
+            <InputField
+              id="firstName"
+              label="First Name"
+              type="text"
+              placeholder=""
+              icon={<UserRound size={14} />}
+              readOnly
+              value={searchedStudent.firstName}
+            />
+            <InputField
+              id="lastName"
+              label="Last Name"
+              type="text"
+              placeholder=""
+              icon={<UserRound size={14} />}
+              readOnly
+              value={searchedStudent.lastName}
+            />
+            <InputField
+              id="middleName"
+              label="Middle Name"
+              type="text"
+              placeholder=""
+              icon={<UserRound size={14} />}
+              readOnly
+              value={searchedStudent.middleName || "—"}
+            />
+            <InputField
+              id="section"
+              label="Section"
+              type="text"
+              placeholder=""
+              icon={<ShieldCheck size={14} />}
+              readOnly
+              value={searchedStudent.section}
+            />
+            <div className="col-span-2">
+              <InputField
+                id="course"
+                label="Course"
+                type="text"
+                placeholder=""
+                icon={<ShieldCheck size={14} />}
+                readOnly
+                value={searchedStudent.course}
+              />
+            </div>
+          </div>
+
+          <InputField
+            id="password"
+            label="Set Password"
+            type="password"
+            placeholder="Create a secure password"
+            icon={<LockKeyhole size={18} />}
+            disabled={isSubmitting}
+          />
+        </>
+      )}
       
       <button
         type="submit"
         disabled={isSubmitting}
-        className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary-accent px-4 py-3 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 mt-4"
+        className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary-accent px-4 py-2.5 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 mt-2"
       >
-        <UserPlus size={20} />
-        {isSubmitting ? "Creating Account..." : "Create Account"}
+        <UserPlus size={18} />
+        {isSubmitting
+          ? searchedStudent ? "Registering..." : "Searching..."
+          : searchedStudent ? "Register & Create Account" : "Search Student"}
       </button>
     </form>
   );
@@ -460,15 +677,30 @@ type InputFieldProps = {
   placeholder: string;
   icon: ReactNode;
   disabled?: boolean;
+  readOnly?: boolean;
+  value?: string;
+  defaultValue?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-function InputField({ id, label, type, placeholder, icon, disabled = false }: InputFieldProps) {
+function InputField({
+  id,
+  label,
+  type,
+  placeholder,
+  icon,
+  disabled = false,
+  readOnly = false,
+  value,
+  defaultValue,
+  onChange,
+}: InputFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
   const resolvedType = isPassword && showPassword ? "text" : type;
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <label htmlFor={id} className="font-lexend flex items-center gap-2 text-sm font-semibold text-primary">
         <span className="text-slate-400">{icon}</span>
         {label}
@@ -480,9 +712,16 @@ function InputField({ id, label, type, placeholder, icon, disabled = false }: In
           type={resolvedType}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-full rounded-xl border border-line bg-surface-strong px-3.5 py-2.5 text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-primary-accent focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+          readOnly={readOnly}
+          value={value}
+          defaultValue={defaultValue}
+          onChange={onChange}
+          className={cn(
+            "w-full rounded-xl border border-line bg-surface-strong px-3.5 py-2 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-primary-accent focus:ring-4 focus:ring-blue-100 disabled:opacity-60",
+            readOnly && "bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed focus:ring-0 focus:border-slate-200"
+          )}
         />
-        {isPassword && (
+        {isPassword && !readOnly && (
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
